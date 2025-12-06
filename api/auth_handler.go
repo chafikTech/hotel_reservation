@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -33,6 +34,18 @@ type AuthResponse struct {
 	token string      `json:"token"`
 }
 
+type genericResp struct {
+	Type string `json:"type"`
+	Msg  string `json:"msg"`
+}
+
+func invalideCredentials(c *fiber.Ctx) error {
+	return c.Status(http.StatusBadRequest).JSON(genericResp{
+		Type: "Error",
+		Msg:  "invalide credentials",
+	})
+}
+
 // Handler should only do :
 // - serialization of the incoming request (json)
 // - do some data fetching from db
@@ -46,13 +59,13 @@ func (h *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	user, err := h.userStore.GetUserByEmail(c.Context(), params.Email)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return fmt.Errorf("Invalide credentials")
+			return invalideCredentials(c)
 		}
 		return err
 	}
 
 	if !types.IsValidPassword(user.EncryptedPassword, params.Password) {
-		return fmt.Errorf("invalide credentials")
+		return invalideCredentials(c)
 	}
 	resp := AuthResponse{
 		User:  user,

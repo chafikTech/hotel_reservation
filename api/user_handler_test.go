@@ -16,7 +16,6 @@ import (
 )
 
 const testdburi = "mongodb://localhost:27017"
-const dbname = "hotel_reservation-test"
 
 type testdb struct {
 	db.UserStore
